@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OPA Policy Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f11;
+    --bg2: #17171a;
+    --bg3: #1e1e23;
+    --bg4: #26262d;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #e8e8ec;
+    --text2: #9090a0;
+    --text3: #5a5a6a;
+    --green: #22c97a;
+    --green-bg: rgba(34,201,122,0.1);
+    --green-border: rgba(34,201,122,0.25);
+    --red: #f04f5e;
+    --red-bg: rgba(240,79,94,0.1);
+    --red-border: rgba(240,79,94,0.25);
+    --blue: #4e9eff;
+    --blue-bg: rgba(78,158,255,0.1);
+    --amber: #f5a623;
+    --amber-bg: rgba(245,166,35,0.1);
+    --purple: #a78bfa;
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+    line-height: 1.5;
+  }
+
+  .app {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 24px;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .header-left h1 {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+  }
+  .header-left p { font-size: 13px; color: var(--text2); }
+  .header-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--green-bg);
+    border: 1px solid var(--green-border);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--green);
+  }
+  .pulse {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--green);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.6;transform:scale(0.85)} }
+
+  /* Main layout */
+  .main { display: grid; grid-template-columns: 320px 1fr; gap: 20px; }
+
+  /* Panel */
+  .panel {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+  }
+  .panel-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--text3);
+    margin-bottom: 14px;
+  }
+
+  /* Scenarios */
+  .scenario-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 20px; }
+  .scenario-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all .15s;
+    background: transparent;
+    color: var(--text);
+    text-align: left;
+    width: 100%;
+  }
+  .scenario-item:hover { background: var(--bg3); border-color: var(--border2); }
+  .scenario-item.active { background: var(--bg3); border-color: var(--blue); }
+  .scenario-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; flex-shrink: 0;
+  }
+  .scenario-info .name { font-size: 13px; font-weight: 500; }
+  .scenario-info .desc { font-size: 11px; color: var(--text2); margin-top: 1px; }
+
+  /* Roles */
+  .role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 20px; }
+  .role-btn {
+    padding: 9px 10px; border: 1px solid var(--border);
+    border-radius: var(--radius); cursor: pointer; background: transparent;
+    color: var(--text2); font-family: 'DM Sans', sans-serif;
+    font-size: 12px; font-weight: 500;
+    display: flex; align-items: center; gap: 7px;
+    transition: all .15s; text-align: left;
+  }
+  .role-btn:hover { background: var(--bg3); color: var(--text); }
+  .role-btn.active { border-color: var(--role-color); color: var(--role-color); background: var(--role-bg); }
+  .role-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--role-color); flex-shrink: 0; }
+
+  /* Resources */
+  .resource-list { display: flex; flex-direction: column; gap: 5px; margin-bottom: 20px; }
+  .resource-btn {
+    padding: 8px 11px; border: 1px solid var(--border);
+    border-radius: var(--radius); cursor: pointer; background: transparent;
+    color: var(--text2); font-family: 'DM Mono', monospace;
+    font-size: 11.5px; transition: all .15s; text-align: left;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .resource-btn:hover { background: var(--bg3); color: var(--text); }
+  .resource-btn.active { border-color: var(--border2); background: var(--bg3); color: var(--text); }
+  .tag {
+    font-size: 10px; font-weight: 600; padding: 2px 7px;
+    border-radius: 4px; font-family: 'DM Sans', sans-serif;
+    text-transform: uppercase; letter-spacing: .04em;
+  }
+  .tag-pii { background: var(--red-bg); color: var(--red); }
+  .tag-sensitive { background: var(--amber-bg); color: var(--amber); }
+  .tag-public { background: var(--green-bg); color: var(--green); }
+  .tag-stream { background: var(--blue-bg); color: var(--blue); }
+  .tag-route { background: rgba(167,139,250,0.12); color: var(--purple); }
+
+  /* Actions */
+  .action-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px; }
+  .action-btn {
+    padding: 6px 14px; border: 1px solid var(--border);
+    border-radius: 20px; cursor: pointer; background: transparent;
+    color: var(--text2); font-family: 'DM Sans', sans-serif;
+    font-size: 12px; font-weight: 500; transition: all .15s;
+  }
+  .action-btn:hover { background: var(--bg3); color: var(--text); border-color: var(--border2); }
+  .action-btn.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+  /* Go button */
+  .go-btn {
+    width: 100%; padding: 12px; border: 1px solid var(--border2);
+    border-radius: var(--radius); cursor: pointer;
+    background: var(--bg3); color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+    transition: all .15s; letter-spacing: -0.01em;
+  }
+  .go-btn:hover { background: var(--bg4); border-color: var(--text3); }
+  .go-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* Right panel */
+  .right { display: flex; flex-direction: column; gap: 16px; }
+
+  /* Journey */
+  .journey {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 18px 20px;
+  }
+  .journey-flow {
+    display: grid; grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr;
+    align-items: center; gap: 8px;
+  }
+  .journey-node {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 10px 12px; text-align: center;
+    transition: all .3s;
+  }
+  .journey-node.active { border-color: var(--amber); background: var(--amber-bg); }
+  .journey-node.done-allow { border-color: var(--green); background: var(--green-bg); }
+  .journey-node.done-deny { border-color: var(--red); background: var(--red-bg); }
+  .journey-node .jlabel { font-size: 12px; font-weight: 600; }
+  .journey-node .jsub { font-size: 10px; color: var(--text3); margin-top: 2px; }
+  .journey-node.active .jlabel { color: var(--amber); }
+  .journey-node.active .jsub { color: var(--amber); opacity: .7; }
+  .journey-node.done-allow .jlabel { color: var(--green); }
+  .journey-node.done-allow .jsub { color: var(--green); opacity: .7; }
+  .journey-node.done-deny .jlabel { color: var(--red); }
+  .journey-node.done-deny .jsub { color: var(--red); opacity: .7; }
+  .journey-arrow { color: var(--text3); font-size: 16px; text-align: center; }
+
+  /* Verdict */
+  .verdict-wrap {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 20px; min-height: 140px;
+  }
+  .verdict-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 16px; border-radius: 20px;
+    font-size: 14px; font-weight: 600; margin-bottom: 12px;
+  }
+  .verdict-badge.idle { background: var(--bg3); color: var(--text2); border: 1px solid var(--border); }
+  .verdict-badge.allow { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+  .verdict-badge.deny { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); }
+  .verdict-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+  .verdict-text { font-size: 13px; color: var(--text2); line-height: 1.6; margin-bottom: 12px; }
+  .verdict-payload {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px 14px;
+    font-family: 'DM Mono', monospace; font-size: 11.5px;
+    line-height: 1.8; color: var(--text2);
+  }
+  .payload-key { color: #7dd3fc; }
+  .payload-str { color: #86efac; }
+  .payload-num { color: #fda4af; }
+  .payload-bool-true { color: var(--green); }
+  .payload-bool-false { color: var(--red); }
+
+  /* Data table */
+  .data-wrap {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); overflow: hidden;
+  }
+  .data-hdr {
+    padding: 12px 16px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .data-hdr-title { font-size: 12px; font-weight: 600; font-family: 'DM Mono', monospace; color: var(--text2); }
+  table.dt { width: 100%; border-collapse: collapse; font-size: 12px; }
+  table.dt th {
+    padding: 8px 14px; text-align: left; font-weight: 600;
+    font-size: 11px; color: var(--text3); border-bottom: 1px solid var(--border);
+    background: var(--bg3); text-transform: uppercase; letter-spacing: .05em;
+  }
+  table.dt td { padding: 9px 14px; border-bottom: 1px solid var(--border); color: var(--text2); }
+  table.dt tr:last-child td { border-bottom: none; }
+  table.dt tr:hover td { background: var(--bg3); }
+  .masked-val { color: var(--text3); font-family: 'DM Mono', monospace; letter-spacing: .05em; }
+  .blocked-overlay {
+    padding: 28px; text-align: center;
+    color: var(--text3); font-size: 13px;
+  }
+  .blocked-icon {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: var(--red-bg); border: 1px solid var(--red-border);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 10px; font-size: 18px; color: var(--red);
+  }
+
+  /* Log */
+  .log-wrap {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 16px 20px;
+  }
+  .log-hdr {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .log-items { display: flex; flex-direction: column; gap: 5px; }
+  .log-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 10px; border: 1px solid var(--border);
+    border-radius: 8px; font-size: 12px;
+    animation: fadeIn .3s ease;
+  }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
+  .log-badge {
+    font-size: 10px; font-weight: 700; padding: 2px 8px;
+    border-radius: 6px; flex-shrink: 0; letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+  .log-badge.allow { background: var(--green-bg); color: var(--green); }
+  .log-badge.deny { background: var(--red-bg); color: var(--red); }
+  .log-detail { flex: 1; color: var(--text2); }
+  .log-svc { font-weight: 600; color: var(--text); }
+  .log-time { font-size: 10px; color: var(--text3); font-family: 'DM Mono', monospace; }
+  .log-empty { font-size: 12px; color: var(--text3); text-align: center; padding: 12px 0; }
+
+  /* Stats row */
+  .stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 20px; }
+  .stat {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 12px 14px;
+  }
+  .stat-label { font-size: 11px; color: var(--text3); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .05em; }
+  .stat-value { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
+  .stat-value.green { color: var(--green); }
+  .stat-value.red { color: var(--red); }
+
+  /* Divider */
+  .sep { height: 1px; background: var(--border); margin: 4px 0; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div class="header-left">
+      <h1>OPA Policy Enforcement</h1>
+      <p>Interactive demo — see how access policies work across OpenMetadata, Kafka, and API Gateway</p>
+    </div>
+    <div class="header-badge">
+      <div class="pulse"></div>
+      Policy engine active
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-label">Total requests</div><div class="stat-value" id="stat-total">0</div></div>
+    <div class="stat"><div class="stat-label">Allowed</div><div class="stat-value green" id="stat-allow">0</div></div>
+    <div class="stat"><div class="stat-label">Denied</div><div class="stat-value red" id="stat-deny">0</div></div>
+    <div class="stat"><div class="stat-label">Deny rate</div><div class="stat-value" id="stat-rate">—</div></div>
+  </div>
+
+  <div class="main">
+
+    <div class="panel">
+      <div class="panel-title">Scenario</div>
+      <div class="scenario-list" id="scenario-list"></div>
+
+      <div class="sep" style="margin-bottom:16px"></div>
+      <div class="panel-title">Who are you?</div>
+      <div class="role-grid" id="role-grid"></div>
+
+      <div class="sep" style="margin-bottom:16px"></div>
+      <div class="panel-title">Resource</div>
+      <div class="resource-list" id="resource-list"></div>
+
+      <div class="sep" style="margin-bottom:16px"></div>
+      <div class="panel-title">Action</div>
+      <div class="action-row" id="action-row"></div>
+
+      <button class="go-btn" id="go-btn" onclick="runDemo()">Send request →</button>
+    </div>
+
+    <div class="right">
+
+      <div class="journey" id="journey-wrap">
+        <div class="panel-title" style="margin-bottom:14px">Request journey</div>
+        <div class="journey-flow">
+          <div class="journey-node" id="jn-you"><div class="jlabel">You</div><div class="jsub">initiating</div></div>
+          <div class="journey-arrow">→</div>
+          <div class="journey-node" id="jn-kong"><div class="jlabel">Kong</div><div class="jsub">gateway</div></div>
+          <div class="journey-arrow">→</div>
+          <div class="journey-node" id="jn-opa"><div class="jlabel">OPA</div><div class="jsub">policy check</div></div>
+          <div class="journey-arrow">→</div>
+          <div class="journey-node" id="jn-svc"><div class="jlabel" id="jn-svc-name">OpenMetadata</div><div class="jsub">data service</div></div>
+        </div>
+      </div>
+
+      <div class="verdict-wrap">
+        <div class="panel-title" style="margin-bottom:14px">Decision</div>
+        <div class="verdict-badge idle" id="verdict-badge"><span class="verdict-dot"></span>Awaiting request</div>
+        <div class="verdict-text" id="verdict-text" style="color:var(--text3);font-size:12px">Choose a role, resource and action, then click Send request.</div>
+        <div class="verdict-payload" id="verdict-payload" style="display:none"></div>
+      </div>
+
+      <div class="data-wrap" id="data-wrap" style="display:none"></div>
+
+      <div class="log-wrap">
+        <div class="log-hdr">
+          <div class="panel-title" style="margin-bottom:0">Audit log</div>
+          <button onclick="clearLog()" style="font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif">Clear</button>
+        </div>
+        <div class="log-items" id="log-items">
+          <div class="log-empty">No requests yet</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const SCENARIOS = [
+  {
+    id:'catalog', name:'Data catalog', desc:'OpenMetadata via Kong + OPA', icon:'🗂', svc:'OpenMetadata',
+    resources:[
+      {name:'sales_table',tag:'public'},
+      {name:'customer_pii_table',tag:'pii'},
+      {name:'analytics_dashboard',tag:'public'},
+      {name:'sensitive_financials',tag:'sensitive'},
+    ],
+    actions:['read','write','delete'],
+    samples:{
+      public:[{id:'001',name:'Q1 Sales',region:'EMEA',amount:'$1.2M'},{id:'002',name:'Q2 Sales',region:'APAC',amount:'$980K'},{id:'003',name:'Q3 Forecast',region:'Americas',amount:'$1.5M'}],
+      pii:[{id:'001',name:'Alice Johnson',email:'a***@***.com',ssn:'***-**-****',dob:'**/**/****'},{id:'002',name:'Bob Chen',email:'b***@***.com',ssn:'***-**-****',dob:'**/**/****'},{id:'003',name:'Carol Smith',email:'c***@***.com',ssn:'***-**-****',dob:'**/**/****'}],
+      sensitive:[{id:'001',name:'FY2025 Budget',dept:'Finance',amount:'*****',status:'restricted'},{id:'002',name:'Board Projections',dept:'Executive',amount:'*****',status:'restricted'}],
+    }
+  },
+  {
+    id:'kafka', name:'Kafka streaming', desc:'Event topics via OPA authorizer', icon:'⚡', svc:'Kafka',
+    resources:[
+      {name:'analytics-events',tag:'stream'},
+      {name:'product_clicks',tag:'stream'},
+      {name:'pii_events',tag:'pii'},
+      {name:'internal_audit',tag:'sensitive'},
+    ],
+    actions:['publish','consume'],
+    samples:{
+      stream:[{offset:'1042',key:'user_123',event:'page_view',ts:'05:47:12'},{offset:'1043',key:'user_456',event:'button_click',ts:'05:47:13'},{offset:'1044',key:'user_789',event:'purchase',ts:'05:47:15'}],
+    }
+  },
+  {
+    id:'api', name:'API gateway', desc:'HTTP routes protected by Kong + OPA', icon:'🔀', svc:'API Gateway',
+    resources:[
+      {name:'/api/data/reports',tag:'route'},
+      {name:'/api/public/dashboard',tag:'public'},
+      {name:'/api/admin/users',tag:'sensitive'},
+      {name:'/api/data/pipelines',tag:'route'},
+    ],
+    actions:['GET','POST','DELETE'],
+    samples:{
+      route:[{id:'rpt_001',name:'Revenue report',status:'active',owner:'finance-team'},{id:'rpt_002',name:'Churn analysis',status:'draft',owner:'analytics-team'},{id:'rpt_003',name:'Funnel report',status:'active',owner:'product-team'}],
+      public:[{id:'dash_001',name:'Company KPIs',views:'1.2k',updated:'today'},{id:'dash_002',name:'Product metrics',views:'890',updated:'yesterday'}],
+    }
+  }
+];
+
+const ROLES = [
+  {id:'admin',label:'Admin',color:'#22c97a',bg:'rgba(34,201,122,0.1)'},
+  {id:'data_steward',label:'Data steward',color:'#4e9eff',bg:'rgba(78,158,255,0.1)'},
+  {id:'analyst',label:'Analyst',color:'#f5a623',bg:'rgba(245,166,35,0.1)'},
+  {id:'viewer',label:'Viewer',color:'#9090a0',bg:'rgba(144,144,160,0.1)'},
+];
+
+function evaluate(sid, role, action, resource) {
+  if (role === 'admin') return true;
+  if (sid === 'catalog') {
+    if (role === 'data_steward') return ['read','write'].includes(action);
+    if (role === 'analyst') return action === 'read' && !resource.includes('pii') && !resource.includes('sensitive');
+    if (role === 'viewer') return action === 'read' && !resource.includes('pii') && !resource.includes('sensitive');
+  }
+  if (sid === 'kafka') {
+    if (role === 'data_steward') return action === 'publish' && !resource.startsWith('pii') && !resource.startsWith('internal');
+    if (role === 'analyst') return (action === 'publish' && !resource.startsWith('pii') && !resource.startsWith('internal')) || (action === 'consume' && ['analytics-events','product_clicks','public_feed'].includes(resource));
+    if (role === 'viewer') return false;
+  }
+  if (sid === 'api') {
+    if (role === 'data_steward') return action === 'GET' || (action === 'POST' && resource.startsWith('/api/data/'));
+    if (role === 'analyst') return action === 'GET';
+    if (role === 'viewer') return action === 'GET' && resource.startsWith('/api/public/');
+  }
+  return false;
+}
+
+let state = { scenario:'catalog', role:'admin', resource:'sales_table', action:'read' };
+let stats = { total:0, allow:0, deny:0 };
+let log = [];
+
+function init() {
+  renderScenarios();
+  renderRoles();
+  renderResources();
+  renderActions();
+}
+
+function renderScenarios() {
+  document.getElementById('scenario-list').innerHTML = SCENARIOS.map(s => `
+    <button class="scenario-item ${s.id===state.scenario?'active':''}" onclick="setScenario('${s.id}')">
+      <div class="scenario-icon" style="background:${s.id==='catalog'?'rgba(78,158,255,0.12)':s.id==='kafka'?'rgba(245,166,35,0.12)':'rgba(34,201,122,0.12)'}">${s.icon}</div>
+      <div class="scenario-info"><div class="name">${s.name}</div><div class="desc">${s.desc}</div></div>
+    </button>
+  `).join('');
+}
+
+function renderRoles() {
+  document.getElementById('role-grid').innerHTML = ROLES.map(r => `
+    <button class="role-btn ${r.id===state.role?'active':''}"
+      style="--role-color:${r.color};--role-bg:${r.bg}"
+      onclick="setRole('${r.id}')">
+      <span class="role-dot" style="background:${r.color}"></span>${r.label}
+    </button>
+  `).join('');
+}
+
+function renderResources() {
+  const sc = SCENARIOS.find(s=>s.id===state.scenario);
+  document.getElementById('resource-list').innerHTML = sc.resources.map(r => `
+    <button class="resource-btn ${r.name===state.resource?'active':''}" onclick="setResource('${r.name}')">
+      <span>${r.name}</span>
+      <span class="tag tag-${r.tag}">${r.tag}</span>
+    </button>
+  `).join('');
+}
+
+function renderActions() {
+  const sc = SCENARIOS.find(s=>s.id===state.scenario);
+  document.getElementById('action-row').innerHTML = sc.actions.map(a => `
+    <button class="action-btn ${a===state.action?'active':''}" onclick="setAction('${a}')">${a}</button>
+  `).join('');
+}
+
+function setScenario(id) {
+  state.scenario = id;
+  const sc = SCENARIOS.find(s=>s.id===id);
+  state.resource = sc.resources[0].name;
+  state.action = sc.actions[0];
+  document.getElementById('jn-svc-name').textContent = sc.svc;
+  renderScenarios(); renderResources(); renderActions();
+  clearResult();
+}
+function setRole(id) { state.role=id; renderRoles(); clearResult(); }
+function setResource(n) { state.resource=n; renderResources(); clearResult(); }
+function setAction(a) { state.action=a; renderActions(); clearResult(); }
+
+function clearResult() {
+  document.getElementById('verdict-badge').className='verdict-badge idle';
+  document.getElementById('verdict-badge').innerHTML='<span class="verdict-dot"></span>Awaiting request';
+  document.getElementById('verdict-text').textContent='Choose a role, resource and action, then click Send request.';
+  document.getElementById('verdict-text').style.color='var(--text3)';
+  document.getElementById('verdict-payload').style.display='none';
+  document.getElementById('data-wrap').style.display='none';
+  ['jn-you','jn-kong','jn-opa','jn-svc'].forEach(id=>document.getElementById(id).className='journey-node');
+}
+
+function formatPayload(obj) {
+  return JSON.stringify(obj,null,2)
+    .replace(/"([^"]+)":/g,'<span class="payload-key">"$1"</span>:')
+    .replace(/: "([^"]+)"/g,': <span class="payload-str">"$1"</span>')
+    .replace(/: (\d+)/g,': <span class="payload-num">$1</span>')
+    .replace(/: true/g,': <span class="payload-bool-true">true</span>')
+    .replace(/: false/g,': <span class="payload-bool-false">false</span>');
+}
+
+async function runDemo() {
+  const {scenario,role,action,resource} = state;
+  const sc = SCENARIOS.find(s=>s.id===scenario);
+  const btn = document.getElementById('go-btn');
+  btn.disabled=true; btn.textContent='Sending...';
+  clearResult();
+
+  const nodes=['jn-you','jn-kong','jn-opa','jn-svc'];
+  nodes.forEach((id,i)=>setTimeout(()=>document.getElementById(id).classList.add('active'),i*350));
+
+  const allowed = evaluate(scenario, role, action, resource);
+
+  setTimeout(()=>{
+    if(allowed) {
+      nodes.forEach(id=>{ document.getElementById(id).className='journey-node done-allow'; });
+      document.getElementById('verdict-badge').className='verdict-badge allow';
+      document.getElementById('verdict-badge').innerHTML='<span class="verdict-dot"></span>Access granted';
+
+      const msgs = {
+        admin:'Admin role has unrestricted access. OPA returned true — Kong forwarded the request to '+sc.svc+'.',
+        data_steward:`Data steward is permitted to "${action}" this resource. Request forwarded to ${sc.svc}.`,
+        analyst:`Analyst role allows "${action}" on non-restricted resources. Request forwarded to ${sc.svc}.`,
+        viewer:`Viewer has read access to this public resource. Request forwarded to ${sc.svc}.`,
+      };
+      document.getElementById('verdict-text').textContent=msgs[role];
+      document.getElementById('verdict-text').style.color='var(--text2)';
+
+      const payload = document.getElementById('verdict-payload');
+      payload.style.display='block';
+      payload.innerHTML = formatPayload({input:{user:{role},action,resource},opa_decision:true,forwarded_to:sc.svc,http_status:200});
+
+      renderDataPreview(sc, resource, true);
+    } else {
+      document.getElementById('jn-you').className='journey-node done-deny';
+      document.getElementById('jn-kong').className='journey-node done-deny';
+      document.getElementById('jn-opa').className='journey-node done-deny';
+      document.getElementById('jn-svc').className='journey-node';
+
+      document.getElementById('verdict-badge').className='verdict-badge deny';
+      document.getElementById('verdict-badge').innerHTML='<span class="verdict-dot"></span>Access denied';
+
+      let why = `"${role}" is not permitted to "${action}" on "${resource}".`;
+      if(resource.includes('pii')) why = 'PII resources are blocked for this role — personal data is protected.';
+      else if(resource.includes('sensitive')||resource.includes('internal')) why = 'Sensitive and internal resources require elevated privileges.';
+      else if(action==='delete'||action==='DELETE') why = 'Delete operations require admin or higher privileges.';
+      else if(action==='write'||action==='POST') why = 'Write access is restricted for this role.';
+
+      document.getElementById('verdict-text').textContent=why+' OPA returned false — Kong blocked the request. '+sc.svc+' never received it.';
+      document.getElementById('verdict-text').style.color='var(--text2)';
+
+      const payload = document.getElementById('verdict-payload');
+      payload.style.display='block';
+      payload.innerHTML = formatPayload({input:{user:{role},action,resource},opa_decision:false,blocked_at:'Kong gateway',http_status:403,message:`OPA denied: role=${role} action=${action} resource=${resource}`});
+
+      renderDataPreview(sc, resource, false);
+    }
+
+    stats.total++;
+    if(allowed) stats.allow++; else stats.deny++;
+    document.getElementById('stat-total').textContent=stats.total;
+    document.getElementById('stat-allow').textContent=stats.allow;
+    document.getElementById('stat-deny').textContent=stats.deny;
+    document.getElementById('stat-rate').textContent=stats.total?Math.round(stats.deny/stats.total*100)+'%':'—';
+
+    const now=new Date().toTimeString().slice(0,8);
+    const res = resource.length>24?resource.slice(0,24)+'…':resource;
+    log.unshift({decision:allowed?'ALLOW':'DENY',svc:sc.svc,role,action,resource:res,time:now});
+    if(log.length>8) log.pop();
+    renderLog();
+
+    btn.disabled=false; btn.textContent='Send request →';
+  }, 1500);
+}
+
+function renderDataPreview(sc, resource, allowed) {
+  const wrap = document.getElementById('data-wrap');
+  wrap.style.display='block';
+  const tag = sc.resources.find(r=>r.name===resource)?.tag;
+  const sampleKey = Object.keys(sc.samples).find(k=>k===tag) || Object.keys(sc.samples)[0];
+  const data = sc.samples[sampleKey];
+  const isPii = resource.includes('pii') || resource.includes('sensitive') || resource.includes('internal') || resource.includes('admin');
+
+  if(!allowed) {
+    wrap.innerHTML=`
+      <div class="data-hdr">
+        <span class="data-hdr-title">${resource}</span>
+        <span class="tag tag-${tag||'sensitive'}">${tag||'sensitive'}</span>
+      </div>
+      <div class="blocked-overlay">
+        <div class="blocked-icon">✕</div>
+        <div style="font-weight:600;color:var(--red);margin-bottom:4px">Request blocked</div>
+        <div>This data was never accessed. The policy engine stopped the request at the gateway.</div>
+      </div>`;
+    return;
+  }
+
+  if(!data) return;
+  const cols = Object.keys(data[0]);
+  wrap.innerHTML=`
+    <div class="data-hdr">
+      <span class="data-hdr-title">${resource}</span>
+      <span class="tag ${isPii?'tag-pii':'tag-public'}">${isPii?'PII — masked':'accessible'}</span>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="dt">
+        <thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead>
+        <tbody>${data.map(row=>`<tr>${cols.map(c=>{
+          const v=row[c].toString();
+          return `<td>${v.includes('*')?`<span class="masked-val">${v}</span>`:v}</td>`;
+        }).join('')}</tr>`).join('')}</tbody>
+      </table>
+    </div>`;
+}
+
+function renderLog() {
+  document.getElementById('log-items').innerHTML = log.length
+    ? log.map(l=>`
+      <div class="log-item">
+        <span class="log-badge ${l.decision.toLowerCase()}">${l.decision}</span>
+        <span class="log-detail"><span class="log-svc">${l.svc}</span> · ${l.role} · ${l.action} · ${l.resource}</span>
+        <span class="log-time">${l.time}</span>
+      </div>`).join('')
+    : '<div class="log-empty">No requests yet</div>';
+}
+
+function clearLog() {
+  log=[]; stats={total:0,allow:0,deny:0};
+  renderLog();
+  document.getElementById('stat-total').textContent='0';
+  document.getElementById('stat-allow').textContent='0';
+  document.getElementById('stat-deny').textContent='0';
+  document.getElementById('stat-rate').textContent='—';
+}
+
+init();
+document.getElementById('jn-svc-name').textContent='OpenMetadata';
+</script>
+</body>
+</html>

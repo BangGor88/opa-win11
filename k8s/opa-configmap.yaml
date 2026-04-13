@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: opa-policy
+  namespace: default
+data:
+  openmetadata.rego: |
+    package openmetadata.authz
+    import future.keywords.if
+    import future.keywords.in
+    default allow = false
+    allow if { input.user.role == "admin" }
+    allow if {
+      input.user.role == "data_steward"
+      input.action in ["read", "write"]
+    }
+    allow if {
+      input.user.role == "analyst"
+      input.action == "read"
+      not contains(input.resource, "pii")
+    }
+    allow if {
+      input.user.role == "viewer"
+      input.action == "read"
+      not contains(input.resource, "pii")
+      not contains(input.resource, "sensitive")
+    }
+  kafka.rego: |
+    package kafka.authz
+    import future.keywords.if
+    import future.keywords.in
+    default allow = false
+    allow if { input.user.role == "admin" }
+    allow if {
+      input.user.role in ["data_steward", "analyst"]
+      input.action == "publish"
+      not startswith(input.resource, "internal_")
+      not startswith(input.resource, "pii_")
+    }
+    allow if {
+      input.user.role == "analyst"
+      input.action == "consume"
+      input.resource in ["analytics_events", "analytics-events", "product_clicks", "public_feed"]
+    }

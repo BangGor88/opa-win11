@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: opa
+  template:
+    metadata:
+      labels:
+        app: opa
+    spec:
+      containers:
+      - name: opa
+        image: openpolicyagent/opa:latest
+        args:
+        - run
+        - --server
+        - --addr=:8181
+        - /policies/openmetadata.rego
+        - /policies/kafka.rego
+        ports:
+        - containerPort: 8181
+        volumeMounts:
+        - name: policy
+          mountPath: /policies
+      volumes:
+      - name: policy
+        configMap:
+          name: opa-policy
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: opa
+spec:
+  selector:
+    app: opa
+  ports:
+  - port: 8181
+    targetPort: 8181

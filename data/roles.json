@@ -1,0 +1,8 @@
+{
+  "roles": {
+    "admin":        ["read","write","delete","publish","consume"],
+    "data_steward": ["read","write","publish"],
+    "analyst":      ["read","consume"],
+    "viewer":       ["read"]
+  }
+}

@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Docker
+*.tar
+
+# Kubernetes secrets (never commit these)
+*-secret.yaml
+*-secrets.yaml
+opa-das-config.yaml
+
+# Local test files
+input.json
+*.tmp
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# VSCode
+.vscode/
+
+# Helm
+charts/

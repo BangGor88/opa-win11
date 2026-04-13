@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-opa-app
+  namespace: kafka
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka-opa-app
+  template:
+    metadata:
+      labels:
+        app: kafka-opa-app
+    spec:
+      containers:
+      - name: kafka-opa-app
+        image: kafka-opa-app:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8000
+        env:
+        - name: OPA_URL
+          value: "http://opa.default.svc.cluster.local:8181"
+        - name: KAFKA_BOOTSTRAP
+          value: "opa-kafka-kafka-bootstrap.kafka.svc.cluster.local:9092"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-opa-app
+  namespace: kafka
+spec:
+  selector:
+    app: kafka-opa-app
+  ports:
+  - port: 8000
+    targetPort: 8000

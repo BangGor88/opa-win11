@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: openmetadata-ingress
+  namespace: default
+  annotations:
+    konghq.com/plugins: opa-authz
+spec:
+  ingressClassName: kong
+  rules:
+  - http:
+      paths:
+      - path: /api/v1
+        pathType: Prefix
+        backend:
+          service:
+            name: openmetadata-proxy
+            port:
+              number: 8585
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: openmetadata-proxy
+            port:
+              number: 8585
